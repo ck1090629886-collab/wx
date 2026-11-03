@@ -34,7 +34,7 @@ android {
         jvmTarget = '17'
     }
 
-    packaging {
+    packagingOptions {
         resources {
             merges += "META-INF/xposed/*"
         }
