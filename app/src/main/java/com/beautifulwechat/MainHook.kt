@@ -20,13 +20,14 @@ class MainHook : IXposedHookLoadPackage {
     }
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        // 只 Hook 微信应用
         if (lpparam.packageName != TARGET_PACKAGE) return
 
         try {
             logInfo("==========================================")
             logInfo("Beautiful WeChat Module Loaded")
-            logInfo("WeChat Version: ${lpparam.appInfo.versionCode}")
+            @Suppress("DEPRECATION")
+            val versionCode = lpparam.appInfo.versionCode
+            logInfo("WeChat Version: $versionCode")
             logInfo("==========================================")
 
             // 初始化 Hookers
@@ -34,11 +35,9 @@ class MainHook : IXposedHookLoadPackage {
             
             // Hook 聊天气泡
             BubbleHooker.hook(classLoader)
-            logInfo("BubbleHooker initialized successfully")
             
-            // Hook 顶栏
+            // Hook 顶部栏
             TopBarHooker.hook(classLoader)
-            logInfo("TopBarHooker initialized successfully")
             
             logInfo("All hooks initialized successfully")
             
@@ -54,7 +53,7 @@ class MainHook : IXposedHookLoadPackage {
 
     private fun logError(message: String, throwable: Throwable) {
         Log.e(TAG, message, throwable)
-        writeLog("ERROR", "$message: ${throwable.message}\n${Log.getStackTraceString(throwable)}")
+        writeLog("ERROR", "$message: ${throwable.message}")
     }
 
     private fun writeLog(level: String, message: String) {
@@ -64,15 +63,15 @@ class MainHook : IXposedHookLoadPackage {
                 logDir.mkdirs()
             }
             
-            val logFile = File(logDir, "error.log")
+            val logFile = File(logDir, "beautifulwechat.log")
+            val timestamp = dateFormat.format(Date())
+            val logMessage = "$timestamp [$level] $message\n"
+            
             FileWriter(logFile, true).use { writer ->
-                PrintWriter(writer).use { printer ->
-                    printer.println("[${dateFormat.format(Date())}] [$level] $message")
-                }
+                writer.write(logMessage)
             }
         } catch (e: Exception) {
-            // 静默失败，不影响主要功能
-            Log.e(TAG, "Failed to write log", e)
+            // 忽略日志写入错误
         }
     }
 }
