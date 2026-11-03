@@ -5,34 +5,46 @@ plugins {
 
 android {
     namespace 'com.beautifulwechat'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.beautifulwechat"
         minSdk 24
-        targetSdk 33
-        versionCode 1
-        versionName "1.0.0"
+        targetSdk 34
+        versionCode 2
+        versionName "2.0.0"
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
         }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '11'
+        jvmTarget = '17'
+    }
+
+    packaging {
+        resources {
+            merges += "META-INF/xposed/*"
+        }
     }
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.10.1'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    // LSPosed Modern API
+    compileOnly 'io.github.libxposed:api:102.0.0'
+    
+    // Android基础库
+    compileOnly 'androidx.annotation:annotation:1.9.1'
 }

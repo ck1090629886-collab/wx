@@ -1,30 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.beautifulwechat">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 写入外部存储权限（用于日志） -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
-        android:label="Beautiful WeChat"
-        android:icon="@mipmap/ic_launcher">
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false">
         
-        <!-- LSPosed 模块标识 -->
+        <!-- 模块描述通过字符串资源提供 -->
         <meta-data
-            android:name="xposedmodule"
-            android:value="true" />
-        
-        <!-- 模块描述 -->
-        <meta-data
-            android:name="xposeddescription"
-            android:value="美化微信聊天界面 - 渐变气泡和毛玻璃效果" />
-        
-        <!-- 最低 Xposed API 版本 -->
-        <meta-data
-            android:name="xposedminversion"
-            android:value="82" />
-        
-        <!-- Hook 作用域：仅微信 -->
-        <meta-data
-            android:name="xposedscope"
-            android:resource="@array/xposed_scope" />
+            android:name="android.app.lib_name"
+            android:value="" />
 
     </application>
 

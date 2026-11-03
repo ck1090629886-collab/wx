@@ -1,23 +1,17 @@
-# 保护我们的 Hook 类
--keep class com.beautifulwechat.** { *; }
--keep class com.beautifulwechat.MainHook { *; }
--keep class com.beautifulwechat.BubbleHooker { *; }
--keep class com.beautifulwechat.TopBarHooker { *; }
--keep class com.beautifulwechat.GradientBubbleDrawable { *; }
+# LSPosed API 102 规则
+-dontwarn io.github.libxposed.annotation.**
+-adaptresourcefilecontents META-INF/xposed/java_init.list
+-keep,allowoptimization,allowobfuscation public class * extends io.github.libxposed.api.XposedModule {
+    public <init>();
+}
 
-# 保护与 Xposed 相关的类
--keep class de.robv.android.xposed.** { *; }
--keep interface de.robv.android.xposed.** { *; }
+# 保留模块入口
+-keep class com.beautifulwechat.ModuleEntry {
+    public <init>();
+}
 
-# 保护 Android 框架类
--keep class android.** { *; }
--keep interface android.** { *; }
+# 保留配置类
+-keep class com.beautifulwechat.config.** { *; }
 
-# 保护 Kotlin 相关
--keep class kotlin.** { *; }
--keep interface kotlin.** { *; }
-
-# 通用规则
--keepattributes *Annotation*
--keepattributes SourceFile,LineNumberTable
--renamesourcefileattribute SourceFile
+# 保留日志工具
+-keep class com.beautifulwechat.util.Logger { *; }
