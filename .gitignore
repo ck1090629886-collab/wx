@@ -1,0 +1,25 @@
+# Gradle files
+.gradle/
+build/
+local.properties
+
+# IDE files
+.idea/
+*.iml
+.DS_Store
+
+# Build outputs
+*.apk
+*.ap_
+*.aab
+
+# Log files
+*.log
+
+# Native
+*.so
+
+# Misc
+captures/
+.externalNativeBuild
+.cxx

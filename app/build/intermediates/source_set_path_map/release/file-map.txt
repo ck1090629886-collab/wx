@@ -1,7 +1,0 @@
-com.beautifulwechat.app-pngs-0 /storage/emulated/0/BeautifulWeChat/app/build/generated/res/pngs/release
-com.beautifulwechat.app-resValues-1 /storage/emulated/0/BeautifulWeChat/app/build/generated/res/resValues/release
-com.beautifulwechat.app-packageReleaseResources-2 /storage/emulated/0/BeautifulWeChat/app/build/intermediates/incremental/release/packageReleaseResources/merged.dir
-com.beautifulwechat.app-packageReleaseResources-3 /storage/emulated/0/BeautifulWeChat/app/build/intermediates/incremental/release/packageReleaseResources/stripped.dir
-com.beautifulwechat.app-merged_res-4 /storage/emulated/0/BeautifulWeChat/app/build/intermediates/merged_res/release
-com.beautifulwechat.app-main-5 /storage/emulated/0/BeautifulWeChat/app/src/main/res
-com.beautifulwechat.app-release-6 /storage/emulated/0/BeautifulWeChat/app/src/release/res
