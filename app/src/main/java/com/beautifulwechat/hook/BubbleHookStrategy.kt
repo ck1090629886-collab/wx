@@ -8,7 +8,8 @@ import com.beautifulwechat.drawable.GradientBubbleDrawable
 import com.beautifulwechat.util.Logger
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
-import java.lang.reflect.Method
+import io.github.libxposed.api.XposedInterface.BeforeHookCallback
+import io.github.libxposed.api.XposedInterface.AfterHookCallback
 
 class BubbleHookStrategy(
     private val module: XposedModule,
@@ -16,7 +17,6 @@ class BubbleHookStrategy(
 ) {
     
     companion object {
-        // 微信聊天气泡可能的类名（按优先级排列）
         private val BUBBLE_CLASS_CANDIDATES = arrayOf(
             "com.tencent.mm.ui.chatting.view.MMChatItemBubble",
             "com.tencent.mm.ui.chatting.ChattingItemBubble",
@@ -24,7 +24,6 @@ class BubbleHookStrategy(
             "com.tencent.mm.ui.base.MMFakeBoldTextView"
         )
         
-        // 颜色配置
         private const val SEND_GRADIENT_START = 0xFF5B4FFF.toInt()
         private const val SEND_GRADIENT_END = 0xFFA855F7.toInt()
         private const val RECEIVE_GRADIENT_START = 0xFFFDE047.toInt()
@@ -32,14 +31,12 @@ class BubbleHookStrategy(
         private const val TEXT_COLOR = Color.WHITE
         private const val CORNER_RADIUS = 14f
         
-        // Drawable缓存，按类型缓存避免重复创建
         private val drawableCache = mutableMapOf<Boolean, GradientBubbleDrawable>()
     }
     
     fun install() {
         var hookedClass: Class<*>? = null
         
-        // 尝试找到气泡类
         for (className in BUBBLE_CLASS_CANDIDATES) {
             try {
                 val clazz = classLoader.loadClass(className)
@@ -47,7 +44,7 @@ class BubbleHookStrategy(
                 Logger.info("event=bubble_class_found class=$className")
                 break
             } catch (e: ClassNotFoundException) {
-                // 继续尝试下一个
+                // 继续
             }
         }
         
@@ -56,10 +53,7 @@ class BubbleHookStrategy(
             return
         }
         
-        // Hook setBackground 方法
         hookSetBackground(hookedClass)
-        
-        // Hook onAttachedToWindow 作为备用
         hookOnAttachedToWindow(hookedClass)
     }
     
@@ -70,23 +64,21 @@ class BubbleHookStrategy(
                 android.graphics.drawable.Drawable::class.java
             )
             
-            module.hook(method).before { param ->
-                try {
-                    val view = param.thisObject as? View
-                    if (view != null && shouldApplyBubbleStyle(view)) {
-                        val isSender = isSenderBubble(view)
-                        val drawable = getCachedDrawable(isSender)
-                        
-                        // 替换参数
-                        param.args[0] = drawable
-                        
-                        // 设置文字颜色
-                        setTextColorRecursive(view, TEXT_COLOR)
+            module.hook(method, object : BeforeHookCallback {
+                override fun beforeHookedMethod(callback: XposedInterface.MethodHookCallback) {
+                    try {
+                        val view = callback.thisObject as? View
+                        if (view != null && shouldApplyBubbleStyle(view)) {
+                            val isSender = isSenderBubble(view)
+                            val drawable = getCachedDrawable(isSender)
+                            callback.args[0] = drawable
+                            setTextColorRecursive(view, TEXT_COLOR)
+                        }
+                    } catch (e: Exception) {
+                        Logger.error("event=hook_execution_failed method=setBackground", e)
                     }
-                } catch (e: Exception) {
-                    Logger.error("event=hook_execution_failed method=setBackground", e)
                 }
-            }
+            })
             
             Logger.info("event=hook_registered method=setBackground")
             
@@ -101,19 +93,20 @@ class BubbleHookStrategy(
         try {
             val method = targetClass.getDeclaredMethod("onAttachedToWindow")
             
-            module.hook(method).after { param ->
-                try {
-                    val view = param.thisObject as? View
-                    if (view != null && shouldApplyBubbleStyle(view)) {
-                        // 在视图附加到窗口后应用样式
-                        view.post {
-                            applyBubbleStyle(view)
+            module.hook(method, object : AfterHookCallback {
+                override fun afterHookedMethod(callback: XposedInterface.MethodHookCallback) {
+                    try {
+                        val view = callback.thisObject as? View
+                        if (view != null && shouldApplyBubbleStyle(view)) {
+                            view.post {
+                                applyBubbleStyle(view)
+                            }
                         }
+                    } catch (e: Exception) {
+                        Logger.error("event=hook_execution_failed method=onAttachedToWindow", e)
                     }
-                } catch (e: Exception) {
-                    Logger.error("event=hook_execution_failed method=onAttachedToWindow", e)
                 }
-            }
+            })
             
             Logger.info("event=hook_registered method=onAttachedToWindow")
             
@@ -125,7 +118,6 @@ class BubbleHookStrategy(
     }
     
     private fun shouldApplyBubbleStyle(view: View): Boolean {
-        // 判断是否应该应用气泡样式
         return try {
             val parent = view.parent
             parent != null && parent is ViewGroup
@@ -164,15 +156,12 @@ class BubbleHookStrategy(
     }
     
     private fun isSenderBubble(view: View): Boolean {
-        // 通过多种方式判断是否为发送气泡
         return try {
-            // 方法1: 检查tag
             val tag = view.tag
             if (tag != null && tag.toString().contains("send", ignoreCase = true)) {
                 return true
             }
             
-            // 方法2: 检查ID或资源名
             val id = view.id
             if (id > 0) {
                 try {
@@ -186,7 +175,6 @@ class BubbleHookStrategy(
                 }
             }
             
-            // 方法3: 检查布局位置（发送气泡通常在右侧）
             val parent = view.parent as? ViewGroup
             if (parent != null) {
                 val x = view.left
@@ -211,7 +199,7 @@ class BubbleHookStrategy(
                 }
             }
         } catch (e: Exception) {
-            // 忽略设置失败
+            // 忽略
         }
     }
 }

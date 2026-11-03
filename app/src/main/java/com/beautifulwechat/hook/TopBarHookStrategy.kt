@@ -3,7 +3,10 @@ package com.beautifulwechat.hook
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import com.beautifulwechat.util.Logger
+import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedInterface.BeforeHookCallback
+import io.github.libxposed.api.XposedInterface.AfterHookCallback
 
 class TopBarHookStrategy(
     private val module: XposedModule,
@@ -11,7 +14,6 @@ class TopBarHookStrategy(
 ) {
     
     companion object {
-        // 顶栏相关类
         private val TOPBAR_CLASS_CANDIDATES = arrayOf(
             "com.tencent.mm.ui.chatting.ChattingUI",
             "com.tencent.mm.ui.chatting.ChattingUIActivity",
@@ -19,15 +21,11 @@ class TopBarHookStrategy(
             "android.app.ActionBar"
         )
         
-        // 半透明黑色背景
         private val TOPBAR_BACKGROUND = ColorDrawable(Color.argb(128, 0, 0, 0))
     }
     
     fun install() {
-        // 尝试Hook ActionBar的背景设置
         hookActionBar()
-        
-        // 尝试Hook微信聊天页面的顶栏
         hookChattingUI()
     }
     
@@ -39,14 +37,15 @@ class TopBarHookStrategy(
                 android.graphics.drawable.Drawable::class.java
             )
             
-            module.hook(method).before { param ->
-                try {
-                    // 替换为半透明背景
-                    param.args[0] = TOPBAR_BACKGROUND
-                } catch (e: Exception) {
-                    Logger.error("event=hook_execution_failed method=setBackgroundDrawable", e)
+            module.hook(method, object : BeforeHookCallback {
+                override fun beforeHookedMethod(callback: XposedInterface.MethodHookCallback) {
+                    try {
+                        callback.args[0] = TOPBAR_BACKGROUND
+                    } catch (e: Exception) {
+                        Logger.error("event=hook_execution_failed method=setBackgroundDrawable", e)
+                    }
                 }
-            }
+            })
             
             Logger.info("event=hook_registered method=ActionBar.setBackgroundDrawable")
             
@@ -67,7 +66,7 @@ class TopBarHookStrategy(
                 Logger.info("event=topbar_class_found class=$className")
                 return
             } catch (e: ClassNotFoundException) {
-                // 继续尝试
+                // 继续
             }
         }
         
@@ -76,18 +75,18 @@ class TopBarHookStrategy(
     
     private fun hookChattingUIClass(targetClass: Class<*>) {
         try {
-            // Hook onCreate 方法
             val method = targetClass.getDeclaredMethod("onCreate", android.os.Bundle::class.java)
             
-            module.hook(method).after { param ->
-                try {
-                    // 在onCreate后设置ActionBar背景
-                    val activity = param.thisObject as? android.app.Activity
-                    activity?.actionBar?.setBackgroundDrawable(TOPBAR_BACKGROUND)
-                } catch (e: Exception) {
-                    Logger.error("event=hook_execution_failed method=onCreate", e)
+            module.hook(method, object : AfterHookCallback {
+                override fun afterHookedMethod(callback: XposedInterface.MethodHookCallback) {
+                    try {
+                        val activity = callback.thisObject as? android.app.Activity
+                        activity?.actionBar?.setBackgroundDrawable(TOPBAR_BACKGROUND)
+                    } catch (e: Exception) {
+                        Logger.error("event=hook_execution_failed method=onCreate", e)
+                    }
                 }
-            }
+            })
             
             Logger.info("event=hook_registered method=ChattingUI.onCreate")
             
