@@ -32,13 +32,8 @@ android {
     }
 }
 
-repositories {
-    mavenCentral()
-    maven { url 'https://api.xposed.info/' }
-}
-
 dependencies {
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    compileOnly 'de.robv.android.xposed:api:82'
+    compileOnly 'io.github.libxposed:api:100'
 }
