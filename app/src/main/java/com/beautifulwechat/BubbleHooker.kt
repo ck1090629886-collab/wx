@@ -1,6 +1,7 @@
 package com.beautifulwechat
 
 import android.graphics.Color
+import android.util.Log
 import android.widget.FrameLayout
 import android.widget.TextView
 import de.robv.android.xposed.XposedHelpers
@@ -9,7 +10,7 @@ import java.lang.reflect.Method
 
 object BubbleHooker {
     
-    private const val TAG = "BubbleHooker"
+    private const val TAG = "BeautifulWeChat-Bubble"
     
     // 微信气泡相关类名（可能需要根据版本调整）
     private val BUBBLE_CLASS_NAMES = arrayOf(
@@ -38,18 +39,18 @@ object BubbleHooker {
                 try {
                     val bubbleClass = XposedHelpers.findClass(className, classLoader)
                     hookBubbleClass(bubbleClass)
-                    MainHook.logInfo("Successfully hooked: $className")
+                    Log.i(TAG, "Successfully hooked: $className")
                     return
                 } catch (e: Exception) {
                     // 继续尝试下一个类名
                 }
             }
             
-            MainHook.logWarn("Could not find bubble class, trying dynamic search...")
+            Log.w(TAG, "Could not find bubble class, trying dynamic search...")
             hookByDynamicSearch(classLoader)
             
         } catch (e: Throwable) {
-            MainHook.logError("BubbleHooker initialization failed", e)
+            Log.e(TAG, "BubbleHooker initialization failed", e)
         }
     }
 
@@ -71,7 +72,7 @@ object BubbleHooker {
                             setTextColorRecursive(view, TEXT_COLOR)
                         }
                     } catch (e: Exception) {
-                        MainHook.logError("Error in setBackground hook", e)
+                        Log.e(TAG, "Error in setBackground hook", e)
                     }
                 }
             }
@@ -94,7 +95,7 @@ object BubbleHooker {
                                 setTextColorRecursive(view, TEXT_COLOR)
                             }
                         } catch (e: Exception) {
-                            MainHook.logError("Error in onDraw hook", e)
+                            Log.e(TAG, "Error in onDraw hook", e)
                         }
                     }
                 }
@@ -108,9 +109,9 @@ object BubbleHooker {
         // 尝试通过查找视图来动态定位气泡类
         try {
             // 这是一个 fallback 策略，实际使用中需要根据微信版本调整
-            MainHook.logInfo("Dynamic search for bubble classes - fallback mode")
+            Log.i(TAG, "Dynamic search for bubble classes - fallback mode")
         } catch (e: Exception) {
-            MainHook.logError("Dynamic search failed", e)
+            Log.e(TAG, "Dynamic search failed", e)
         }
     }
 
@@ -150,17 +151,4 @@ object BubbleHooker {
             }
         }
     }
-}
-
-// 日志扩展函数
-private fun MainHook.logInfo(message: String) {
-    // 通过反射调用 MainHook 的 logInfo
-}
-
-private fun MainHook.logError(message: String, throwable: Throwable) {
-    // 通过反射调用 MainHook 的 logError
-}
-
-private fun MainHook.logWarn(message: String) {
-    android.util.Log.w("BubbleHooker", message)
 }
