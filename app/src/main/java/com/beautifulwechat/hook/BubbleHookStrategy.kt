@@ -8,8 +8,6 @@ import com.beautifulwechat.drawable.GradientBubbleDrawable
 import com.beautifulwechat.util.Logger
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
-import io.github.libxposed.api.annotations.BeforeInvocation
-import io.github.libxposed.api.annotations.AfterInvocation
 import java.lang.reflect.Method
 
 class BubbleHookStrategy(
@@ -72,24 +70,23 @@ class BubbleHookStrategy(
                 android.graphics.drawable.Drawable::class.java
             )
             
-            module.hook(method)
-                .setId("bubble_set_background")
-                .setExceptionMode(XposedInterface.ExceptionMode.DEFAULT)
-                .intercept { chain ->
-                    val view = chain.getThis() as? View
+            module.hook(method).before { param ->
+                try {
+                    val view = param.thisObject as? View
                     if (view != null && shouldApplyBubbleStyle(view)) {
                         val isSender = isSenderBubble(view)
                         val drawable = getCachedDrawable(isSender)
                         
-                        // 替换原始背景
-                        chain.proceed(arrayOf(drawable))
+                        // 替换参数
+                        param.args[0] = drawable
                         
                         // 设置文字颜色
                         setTextColorRecursive(view, TEXT_COLOR)
-                    } else {
-                        chain.proceed()
                     }
+                } catch (e: Exception) {
+                    Logger.error("event=hook_execution_failed method=setBackground", e)
                 }
+            }
             
             Logger.info("event=hook_registered method=setBackground")
             
@@ -104,20 +101,19 @@ class BubbleHookStrategy(
         try {
             val method = targetClass.getDeclaredMethod("onAttachedToWindow")
             
-            module.hook(method)
-                .setId("bubble_on_attached")
-                .setExceptionMode(XposedInterface.ExceptionMode.DEFAULT)
-                .intercept { chain ->
-                    chain.proceed()
-                    
-                    val view = chain.getThis() as? View
+            module.hook(method).after { param ->
+                try {
+                    val view = param.thisObject as? View
                     if (view != null && shouldApplyBubbleStyle(view)) {
                         // 在视图附加到窗口后应用样式
                         view.post {
                             applyBubbleStyle(view)
                         }
                     }
+                } catch (e: Exception) {
+                    Logger.error("event=hook_execution_failed method=onAttachedToWindow", e)
                 }
+            }
             
             Logger.info("event=hook_registered method=onAttachedToWindow")
             
@@ -130,7 +126,6 @@ class BubbleHookStrategy(
     
     private fun shouldApplyBubbleStyle(view: View): Boolean {
         // 判断是否应该应用气泡样式
-        // 避免对非消息气泡（如系统提示）应用样式
         return try {
             val parent = view.parent
             parent != null && parent is ViewGroup
@@ -194,8 +189,6 @@ class BubbleHookStrategy(
             // 方法3: 检查布局位置（发送气泡通常在右侧）
             val parent = view.parent as? ViewGroup
             if (parent != null) {
-                val layoutParams = view.layoutParams
-                // 这是一个启发式方法，可能需要根据实际情况调整
                 val x = view.left
                 val parentWidth = parent.width
                 return x > parentWidth / 2

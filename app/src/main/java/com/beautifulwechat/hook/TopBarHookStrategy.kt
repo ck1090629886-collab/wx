@@ -2,9 +2,7 @@ package com.beautifulwechat.hook
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.view.View
 import com.beautifulwechat.util.Logger
-import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
 
 class TopBarHookStrategy(
@@ -41,13 +39,14 @@ class TopBarHookStrategy(
                 android.graphics.drawable.Drawable::class.java
             )
             
-            module.hook(method)
-                .setId("actionbar_background")
-                .setExceptionMode(XposedInterface.ExceptionMode.DEFAULT)
-                .intercept { chain ->
+            module.hook(method).before { param ->
+                try {
                     // 替换为半透明背景
-                    chain.proceed(arrayOf(TOPBAR_BACKGROUND))
+                    param.args[0] = TOPBAR_BACKGROUND
+                } catch (e: Exception) {
+                    Logger.error("event=hook_execution_failed method=setBackgroundDrawable", e)
                 }
+            }
             
             Logger.info("event=hook_registered method=ActionBar.setBackgroundDrawable")
             
@@ -80,16 +79,15 @@ class TopBarHookStrategy(
             // Hook onCreate 方法
             val method = targetClass.getDeclaredMethod("onCreate", android.os.Bundle::class.java)
             
-            module.hook(method)
-                .setId("chatting_ui_oncreate")
-                .setExceptionMode(XposedInterface.ExceptionMode.DEFAULT)
-                .intercept { chain ->
-                    chain.proceed()
-                    
+            module.hook(method).after { param ->
+                try {
                     // 在onCreate后设置ActionBar背景
-                    val activity = chain.getThis() as? android.app.Activity
+                    val activity = param.thisObject as? android.app.Activity
                     activity?.actionBar?.setBackgroundDrawable(TOPBAR_BACKGROUND)
+                } catch (e: Exception) {
+                    Logger.error("event=hook_execution_failed method=onCreate", e)
                 }
+            }
             
             Logger.info("event=hook_registered method=ChattingUI.onCreate")
             
